@@ -1,6 +1,7 @@
 package com.cdavis.advice;
 
 import com.cdavis.errorhandling.ErrorHandler;
+import com.cdavis.errorhandling.ResponseError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,11 +32,15 @@ public class ControllerAdvice extends ResponseEntityExceptionHandler {
 
         try {
             Method method = handler.getClass().getDeclaredMethod( "process", e.getClass());
-            Object responseCode = method.invoke(handler, e);
-            return handleExceptionInternal(e, responseCode, headers, HttpStatus.OK, request);
+            ResponseError responseCode = (ResponseError) method.invoke(handler, e);
+            return handleExceptionInternal(e, responseCode, headers,
+                    HttpStatus.valueOf(responseCode.getHttpResponseCode()), request);
         } catch (NoSuchMethodException e1) {
             Method method = handler.getClass().getDeclaredMethod( "process", Exception.class);
-            return handleExceptionInternal(e, method.invoke(handler, e), headers, HttpStatus.OK, request);
+            ResponseError responseCode = (ResponseError) method.invoke(handler, e);
+
+            return handleExceptionInternal(e, method.invoke(handler, e), headers,
+                    HttpStatus.valueOf(responseCode.getHttpResponseCode()), request);
         } catch (InvocationTargetException e1) {
             e1.printStackTrace();
         } catch (IllegalAccessException e1) {
